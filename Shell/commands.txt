@@ -1,0 +1,48 @@
+ps -a
+ls
+ls 
+ps -a
+ps -a
+ps -a
+
+ls
+
+ps -a
+
+ps -a
+
+ps -a
+
+ps -a
+
+ps -a
+
+ps -a
+ps -a
+ps -a
+
+ps -a
+ps -a
+ps -a
+ps -a
+ps -a
+
+ps -a
+ps -a
+ps -a
+ls
+ps -a
+ps -a
+ps -a
+ps -a
+ps -a
+ps -a
+
+ps -a
+
+ls -a
+
+ps -a
+
+ls -a
+exit
