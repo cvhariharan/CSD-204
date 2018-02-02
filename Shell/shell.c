@@ -6,6 +6,7 @@
 
 #define T_SIZE 15
 #define ARG_SIZE 80
+#define MAX_HISTORY 100
 
 int storeCommand(char *);
 int tokennize(char *, char, char *b[]);
@@ -24,49 +25,39 @@ int main(int argc, char *argv[])
   while(1)
     {
       int i = 0;
-      printf("Shell> ");
+      printf("Hari's Shell> ");
       gets(allArgs);
       storeCommand(allArgs);
       //Split the command line arguments
-      /*token = strtok(allArgs,delim);
-      while(token != NULL)
-	{
-	  args[i] = (char *)malloc(25*sizeof(char));
-	  args[i] = token;
-	  token = strtok(NULL,delim);
-	  i++;
-	  }
-	  args[i] = NULL;*/
-      //ToDo - Release unused memory in args array
       i = tokennize(allArgs,' ',args); //Returns the index of last element + 1
       args[i] = NULL;
-      checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
-
-      
-
-      pid = fork();
-
-      if(pid < 0)
-	fprintf(stderr, "Could not create a child process");
-
-      else if(pid == 0)
-	{ //Code that will be executed by the child process
-	  // printf("%s\n",args[0]);
-	  for(int m = 0;m<i;m++)
-	    printf("%s\n",args[m]);
-	  execvp(args[0],args);
-	  exit(1);
-	}
-      else 
+      if(strcmp(args[0],"history") == 0)
+	showLatestCommands(10); //Show the latest 10 commands
+      // checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
+      else
 	{
-	  if(!dontWait)
-	    {
-	      wait(NULL);
+	  pid = fork();
+
+	  if(pid < 0)
+	    fprintf(stderr, "Could not create a child process");
+
+	  else if(pid == 0)
+	    { //Code that will be executed by the child process
+	      for(int m = 0;m<i;m++)
+		printf("%s\n",args[m]);
+	      execvp(args[0],args);
+	      exit(1);
 	    }
-	  else
-	    continue;
-	}
-	
+	  else 
+	    {
+	      if(!dontWait)
+		{
+		  wait(NULL);
+		}
+	      else
+		continue;
+	    }
+      	}
     }
   return 0;
 }
@@ -75,6 +66,30 @@ int storeCommand(char *command)
 {
   FILE *fp = fopen("commands.txt","a+");
   fprintf(fp,"%s\n",command);
+  fclose(fp);
+}
+
+void showLatestCommands(int num)
+{
+  FILE *fp = fopen("commands.txt","r");
+  ssize_t m;
+  char *line = NULL, *comms[MAX_HISTORY];
+  size_t n = 0;
+  int i = 0,p = 0;
+  while((m = getline(&line,&n,fp))!= -1)
+    {
+      comms[i] = (char *)malloc(n*sizeof(char));
+      comms[i] = line;
+      line = NULL;
+      i++;
+    }
+  for(p = --i; p >= 0; p--)
+    {
+      if((i-p) == num)
+	break;
+      else
+	printf("%s\n", comms[p]);
+    }
   fclose(fp);
 }
 
@@ -93,11 +108,6 @@ int tokennize(char *input,char delim, char *output[])
 {
   int i = 0,m = 0,n = 0,delimFound = 0,previousDelim = 0; 
   char *temp;
-  /*input = (char *)malloc((strlen(text)+2)*sizeof(char));
-  input = text;
-  input[strlen(text)+1] = '*'; //Delim is added as the last character to allow for tokennization
-  input[strlen(text)+2] = '\0';*/
-  //printf("%s\n",input);
   char *start = input;
   for(;i < strlen(input);i++)
     {
