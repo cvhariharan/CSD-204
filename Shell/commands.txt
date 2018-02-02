@@ -1,48 +1,22 @@
-ps -a
-ls
-ls 
-ps -a
-ps -a
-ps -a
-
-ls
-
-ps -a
-
-ps -a
-
-ps -a
-
-ps -a
-
-ps -a
-
-ps -a
-ps -a
-ps -a
-
-ps -a
-ps -a
-ps -a
-ps -a
-ps -a
-
-ps -a
-ps -a
-ps -a
-ls
-ps -a
-ps -a
-ps -a
-ps -a
-ps -a
-ps -a
-
-ps -a
-
 ls -a
-
 ps -a
-
+emacs test&
+gedit commands.txt&
+ps -a
+ps -a
+ps -a
 ls -a
-exit
+ls -l
+top
+ls
+ls
+ls
+ls
+ps -a
+ls
+ls
+ls
+ls -a
+ps -a
+ps
+ls -l
