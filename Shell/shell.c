@@ -11,14 +11,14 @@
 int storeCommand(char *);
 int tokennize(char *, char, char **);
 void checkAmpersand(int *, char *);
-void showLatestCommands(int);//t,char *);
+int loadLatestCommands(char **);//t,char *);
 //t checkInternalCommands(char *,char *)
 
 int main(int argc, char *argv[])
 {
   pid_t pid;
   char *allArgs;
-  char *args[ARG_SIZE/2];
+  char *args[ARG_SIZE/2],*comms[MAX_HISTORY];
   char *token;
   int dontWait = 0;
   const char *delim = " ";
@@ -33,19 +33,30 @@ int main(int argc, char *argv[])
       i = tokennize(allArgs,' ',args); //Returns the index of last element + 1
       args[i] = NULL;
       checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
-
+      int m = loadLatestCommands(comms);
       /*if(!checkInternalCommands(allArgs,token))
 	{
 	  allArgs = token;
 	  }*/
       if(strcmp(args[0],"history") == 0)
-	showLatestCommands(10); //Show the latest 10 commands
-
+	{
+	  for(int p = m-2; p >= 0; p--) //If p = --m then history command will also be printed
+	    {
+	      if((m-p) == 10)
+		break;
+	      else
+		printf("%s", comms[p]);
+    
+	    }
+	}
       else if(strcmp(args[0], "exit") == 0)
 	exit(0);
 
       else if(strcmp(args[0], "!!") == 0)
-	showLatestCommands(1);
+	{
+	  printf("Not yet implemented.\n");
+	}
+      
       else
 	{
 	  pid = fork();
@@ -82,11 +93,11 @@ int storeCommand(char *command)
   fclose(fp);
 }
 
-void showLatestCommands(int num)//t single, char *com)
+int loadLatestCommands(char *comms[])//t single, char *com)
 {
   FILE *fp = fopen("commands.txt","r");
   ssize_t m;
-  char *line = NULL, *comms[MAX_HISTORY];
+  char *line = NULL;
   size_t n = 0;
   int i = 0,p = 0;
   while((m = getline(&line,&n,fp))!= -1)
@@ -97,14 +108,7 @@ void showLatestCommands(int num)//t single, char *com)
       i++;
     }
   //com = (char *)malloc(n*sizeof(char));
-  for(p = --i; p >= 0; p--)
-    {
-	  if((i-p) == num)
-	    break;
-	  else
-	    printf("%s", comms[p]);
-    
-    }
+  /**/
   /*
    if(comms[num] != NULL)
 	com = comms[num];
@@ -116,6 +120,7 @@ void showLatestCommands(int num)//t single, char *com)
       com = comms[--i];
       }*/
   fclose(fp);
+  return i;
 }
 
 void checkAmpersand(int *dontWait, char *lastArg)
