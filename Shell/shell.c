@@ -11,6 +11,8 @@
 int storeCommand(char *);
 int tokennize(char *, char, char *b[]);
 void checkAmpersand(int *, char *);
+void showLatestCommands(int);
+
 int main(int argc, char *argv[])
 {
   pid_t pid;
@@ -31,9 +33,14 @@ int main(int argc, char *argv[])
       //Split the command line arguments
       i = tokennize(allArgs,' ',args); //Returns the index of last element + 1
       args[i] = NULL;
+      checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
+      
       if(strcmp(args[0],"history") == 0)
 	showLatestCommands(10); //Show the latest 10 commands
-      // checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
+
+      else if(strcmp(args[0], "exit") == 0)
+	exit(0);
+
       else
 	{
 	  pid = fork();
@@ -43,8 +50,6 @@ int main(int argc, char *argv[])
 
 	  else if(pid == 0)
 	    { //Code that will be executed by the child process
-	      for(int m = 0;m<i;m++)
-		printf("%s\n",args[m]);
 	      execvp(args[0],args);
 	      exit(1);
 	    }
@@ -55,7 +60,10 @@ int main(int argc, char *argv[])
 		  wait(NULL);
 		}
 	      else
-		continue;
+		{
+		  dontWait = 0;
+		  continue;
+		}
 	    }
       	}
     }
@@ -96,10 +104,11 @@ void showLatestCommands(int num)
 void checkAmpersand(int *dontWait, char *lastArg)
 {
   //Checks the last character in the last argument for ampersand
-  int lastIndex = strlen(lastArg); //Index of the terminating char
-  if(lastArg[--lastIndex] == "&")
+  int lastIndex = strlen(lastArg);
+  printf("%d %c\n",lastIndex,lastArg[--lastIndex]);
+  if(lastArg[lastIndex] == '&')
     {
-      printf("%c\n",*(lastArg+lastIndex));
+      printf("Don't wait.\n");
       *dontWait = 1;
     }
 }
