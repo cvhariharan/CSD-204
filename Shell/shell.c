@@ -9,9 +9,10 @@
 #define MAX_HISTORY 100
 
 int storeCommand(char *);
-int tokennize(char *, char, char *b[]);
+int tokennize(char *, char, char **);
 void checkAmpersand(int *, char *);
-void showLatestCommands(int);
+void showLatestCommands(int);//t,char *);
+//t checkInternalCommands(char *,char *)
 
 int main(int argc, char *argv[])
 {
@@ -22,8 +23,6 @@ int main(int argc, char *argv[])
   int dontWait = 0;
   const char *delim = " ";
   allArgs = (char *)malloc(ARG_SIZE*sizeof(char));
-  token  = (char *)malloc(T_SIZE*sizeof(char));
-
   while(1)
     {
       int i = 0;
@@ -34,13 +33,19 @@ int main(int argc, char *argv[])
       i = tokennize(allArgs,' ',args); //Returns the index of last element + 1
       args[i] = NULL;
       checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
-      
+
+      /*if(!checkInternalCommands(allArgs,token))
+	{
+	  allArgs = token;
+	  }*/
       if(strcmp(args[0],"history") == 0)
 	showLatestCommands(10); //Show the latest 10 commands
 
       else if(strcmp(args[0], "exit") == 0)
 	exit(0);
 
+      else if(strcmp(args[0], "!!") == 0)
+	showLatestCommands(1);
       else
 	{
 	  pid = fork();
@@ -61,7 +66,7 @@ int main(int argc, char *argv[])
 		}
 	      else
 		{
-		  dontWait = 0;
+		  dontWait = 0; //Reset for the next child
 		  continue;
 		}
 	    }
@@ -77,7 +82,7 @@ int storeCommand(char *command)
   fclose(fp);
 }
 
-void showLatestCommands(int num)
+void showLatestCommands(int num)//t single, char *com)
 {
   FILE *fp = fopen("commands.txt","r");
   ssize_t m;
@@ -91,13 +96,25 @@ void showLatestCommands(int num)
       line = NULL;
       i++;
     }
+  //com = (char *)malloc(n*sizeof(char));
   for(p = --i; p >= 0; p--)
     {
-      if((i-p) == num)
-	break;
-      else
-	printf("%s\n", comms[p]);
+	  if((i-p) == num)
+	    break;
+	  else
+	    printf("%s", comms[p]);
+    
     }
+  /*
+   if(comms[num] != NULL)
+	com = comms[num];
+   else
+	printf("No command found at that index.");
+    }
+  else
+    {
+      com = comms[--i];
+      }*/
   fclose(fp);
 }
 
@@ -105,10 +122,9 @@ void checkAmpersand(int *dontWait, char *lastArg)
 {
   //Checks the last character in the last argument for ampersand
   int lastIndex = strlen(lastArg);
-  printf("%d %c\n",lastIndex,lastArg[--lastIndex]);
-  if(lastArg[lastIndex] == '&')
+  //printf("%d %c\n",lastIndex,lastArg[--lastIndex]);
+  if(lastArg[--lastIndex] == '&')
     {
-      printf("Don't wait.\n");
       *dontWait = 1;
     }
 }
@@ -145,3 +161,27 @@ int tokennize(char *input,char delim, char *output[])
       return 1;
     }
   }
+
+/*int checkInternalCommands(char *arg, char *toExec)
+{
+  char *args[ARG_SIZE];
+  int i = tokennize(arg,' ',args);
+  toExec = (char *)malloc(T_SIZE*sizeof(char));
+  if(strcmp(args[0],"history") == 0)
+    {
+      showLatestCommands(10,0,NULL);
+      toExec = NULL;
+      return 1;
+    }
+  if(args[0] == '!')
+    {
+      if(args[1] == '!')
+	showLatestCommands(0,2,toExec);
+      else
+	{
+	  int i = atoi(args+1);
+	  showLatestCommands(i,1,toExec);
+	}
+    }
+  return 0;
+  }*/
