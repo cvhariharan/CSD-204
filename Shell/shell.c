@@ -14,47 +14,79 @@ void checkAmpersand(int *, char *);
 int loadLatestCommands(char **);//t,char *);
 //t checkInternalCommands(char *,char *)
 
+int nosComs = 0; //Number of commands stored in the file
+char *comms[MAX_HISTORY]; //Commands stored in the file
+
 int main(int argc, char *argv[])
 {
-  pid_t pid;
+  
   char *allArgs;
-  char *args[ARG_SIZE/2],*comms[MAX_HISTORY];
-  char *token;
-  int dontWait = 0;
-  const char *delim = " ";
+
   allArgs = (char *)malloc(ARG_SIZE*sizeof(char));
   while(1)
     {
       int i = 0;
       printf("Hari's Shell> ");
       gets(allArgs);
-      storeCommand(allArgs);
+      nosComs = loadLatestCommands(comms);
+      executeCommand(allArgs);
       //Split the command line arguments
-      i = tokennize(allArgs,' ',args); //Returns the index of last element + 1
-      args[i] = NULL;
-      checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
-      int m = loadLatestCommands(comms);
+    }
+  return 0;
+}
+
+int executeCommand(char *allArgs) //Flag is set to 1 to prevent reloading the commands again
+{
+  pid_t pid;
+  int i=0;
+  char *args[ARG_SIZE/2];
+  char *token;
+  int dontWait = 0;
+  const char *delim = " ";
+   i = tokennize(allArgs,' ',args); //Returns the index of last element + 1
+   args[i] = NULL;
+   checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
+   storeCommand(allArgs);
+   comms[nosComs] = allArgs; //Add the command to the commands array
+   nosComs++;
       /*if(!checkInternalCommands(allArgs,token))
 	{
 	  allArgs = token;
 	  }*/
       if(strcmp(args[0],"history") == 0)
 	{
-	  for(int p = m-2; p >= 0; p--) //If p = --m then history command will also be printed
+	  for(int p = nosComs-2; p >= 0; p--) //If p = --nosComs then history command will also be printed
 	    {
-	      if((m-p) == 10)
+	      if((nosComs-p) == 12)
 		break;
 	      else
-		printf("%s", comms[p]);
+		printf("%d. %s", p, comms[p]);
     
 	    }
 	}
       else if(strcmp(args[0], "exit") == 0)
 	exit(0);
-
-      else if(strcmp(args[0], "!!") == 0)
+      
+      else if(args[0][0] == '!')
 	{
-	  printf("Not yet implemented.\n");
+	  if(args[0][1] == '!')
+	    {
+	      executeCommand(comms[nosComs-1]);
+	    }
+
+	  else
+	    {
+	      char *num[2];
+	      tokennize(args[0],'!',num);
+	      // printf("%s\n",num[1]);
+	      int index = atoi(num[1]);
+	      //printf("%d\n",index);
+	      if(comms[index] != NULL)
+		{
+		  // printf("%s\n",comms[index]);
+		  executeCommand(comms[index]);
+		  }
+	    }
 	}
       
       else
@@ -78,12 +110,12 @@ int main(int argc, char *argv[])
 	      else
 		{
 		  dontWait = 0; //Reset for the next child
-		  continue;
+		  return 1;
 		}
 	    }
       	}
-    }
-  return 0;
+      return 1;
+ 
 }
 
 int storeCommand(char *command)
