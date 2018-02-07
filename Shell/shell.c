@@ -30,12 +30,11 @@ int main(int argc, char *argv[])
       gets(allArgs);
       nosComs = loadLatestCommands(comms);
       executeCommand(allArgs);
-      //Split the command line arguments
     }
   return 0;
 }
 
-int executeCommand(char *allArgs) //Flag is set to 1 to prevent reloading the commands again
+int executeCommand(char *command) 
 {
   pid_t pid;
   int i=0;
@@ -43,24 +42,32 @@ int executeCommand(char *allArgs) //Flag is set to 1 to prevent reloading the co
   char *token;
   int dontWait = 0;
   const char *delim = " ";
-   i = tokennize(allArgs,' ',args); //Returns the index of last element + 1
+  char *allArgs;
+  allArgs = (char *)malloc(strlen(command));
+
+  strcpy(allArgs, command); //To prevent tokennize function from breaking the string
+  if(strlen(command) > 1)
+    {
+      storeCommand(command); //Store only non-empty commands
+      comms[nosComs] = allArgs; //Add the command to the commands array (missing the \n)
+      nosComs++;
+    }
+  if(allArgs[strlen(allArgs)-1] == '\n')
+    {
+      allArgs[strlen(allArgs)-1] = '\0'; //Remove the \n character when reading from the file.
+    }
+  //printf("Command: %s\n", allArgs);
+   i = tokennize(allArgs,' ',args);//Returns the index of last element + 1
    args[i] = NULL;
    checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
-   storeCommand(allArgs);
-   comms[nosComs] = allArgs; //Add the command to the commands array
-   nosComs++;
-      /*if(!checkInternalCommands(allArgs,token))
+       if(strcmp(args[0],"history") == 0)
 	{
-	  allArgs = token;
-	  }*/
-      if(strcmp(args[0],"history") == 0)
-	{
-	  for(int p = nosComs-2; p >= 0; p--) //If p = --nosComs then history command will also be printed
+	  for(int p = nosComs-1; p >= 0; p--) //If p = --nosComs then history command will also be printed
 	    {
-	      if((nosComs-p) == 12)
+	      if((nosComs-p) == 11)
 		break;
 	      else
-		printf("%d. %s", p, comms[p]);
+		printf("%d. %s\n", p, comms[p]);
     
 	    }
 	}
@@ -71,21 +78,18 @@ int executeCommand(char *allArgs) //Flag is set to 1 to prevent reloading the co
 	{
 	  if(args[0][1] == '!')
 	    {
-	      executeCommand(comms[nosComs-1]);
+	      executeCommand(comms[nosComs-2]);//nosComs-1 has !! and this leads to an infinite recursion
 	    }
 
 	  else
 	    {
 	      char *num[2];
 	      tokennize(args[0],'!',num);
-	      // printf("%s\n",num[1]);
 	      int index = atoi(num[1]);
-	      //printf("%d\n",index);
 	      if(comms[index] != NULL)
 		{
-		  // printf("%s\n",comms[index]);
 		  executeCommand(comms[index]);
-		  }
+		}
 	    }
 	}
       
@@ -139,18 +143,6 @@ int loadLatestCommands(char *comms[])//t single, char *com)
       line = NULL;
       i++;
     }
-  //com = (char *)malloc(n*sizeof(char));
-  /**/
-  /*
-   if(comms[num] != NULL)
-	com = comms[num];
-   else
-	printf("No command found at that index.");
-    }
-  else
-    {
-      com = comms[--i];
-      }*/
   fclose(fp);
   return i;
 }
@@ -199,26 +191,3 @@ int tokennize(char *input,char delim, char *output[])
     }
   }
 
-/*int checkInternalCommands(char *arg, char *toExec)
-{
-  char *args[ARG_SIZE];
-  int i = tokennize(arg,' ',args);
-  toExec = (char *)malloc(T_SIZE*sizeof(char));
-  if(strcmp(args[0],"history") == 0)
-    {
-      showLatestCommands(10,0,NULL);
-      toExec = NULL;
-      return 1;
-    }
-  if(args[0] == '!')
-    {
-      if(args[1] == '!')
-	showLatestCommands(0,2,toExec);
-      else
-	{
-	  int i = atoi(args+1);
-	  showLatestCommands(i,1,toExec);
-	}
-    }
-  return 0;
-  }*/
