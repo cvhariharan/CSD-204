@@ -11,8 +11,8 @@
 int storeCommand(char *);
 int tokennize(char *, char, char **);
 void checkAmpersand(int *, char *);
-int loadLatestCommands(char **);//t,char *);
-//t checkInternalCommands(char *,char *)
+int loadLatestCommands(char **);
+int executeCommand(char *);
 
 int nosComs = 0; //Number of commands stored in the file
 char *comms[MAX_HISTORY]; //Commands stored in the file
@@ -21,15 +21,15 @@ int main(int argc, char *argv[])
 {
   
   char *allArgs;
-
+  int run = 1;
   allArgs = (char *)malloc(ARG_SIZE*sizeof(char));
-  while(1)
+  while(run)
     {
       int i = 0;
       printf("Hari's Shell> ");
       gets(allArgs);
       nosComs = loadLatestCommands(comms);
-      executeCommand(allArgs);
+      run = executeCommand(allArgs);
     }
   return 0;
 }
@@ -44,7 +44,7 @@ int executeCommand(char *command)
   const char *delim = " ";
   char *allArgs;
   allArgs = (char *)malloc(strlen(command));
-
+  
   strcpy(allArgs, command); //To prevent tokennize function from breaking the string
   if(strlen(command) > 1)
     {
@@ -57,69 +57,69 @@ int executeCommand(char *command)
       allArgs[strlen(allArgs)-1] = '\0'; //Remove the \n character when reading from the file.
     }
   //printf("Command: %s\n", allArgs);
-   i = tokennize(allArgs,' ',args);//Returns the index of last element + 1
-   args[i] = NULL;
-   checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
-       if(strcmp(args[0],"history") == 0)
+  i = tokennize(allArgs,' ',args);//Returns the index of last element + 1
+  args[i] = NULL;
+  checkAmpersand(&dontWait,args[--i]); //Sends the last argument to the function
+  if(strcmp(args[0],"history") == 0)
+    {
+      for(int p = nosComs-1; p >= 0; p--) //If p = --nosComs then history command will also be printed
 	{
-	  for(int p = nosComs-1; p >= 0; p--) //If p = --nosComs then history command will also be printed
-	    {
-	      if((nosComs-p) == 11)
-		break;
-	      else
-		printf("%d. %s\n", p, comms[p]);
-    
-	    }
-	}
-      else if(strcmp(args[0], "exit") == 0)
-	exit(0);
-      
-      else if(args[0][0] == '!')
-	{
-	  if(args[0][1] == '!')
-	    {
-	      executeCommand(comms[nosComs-2]);//nosComs-1 has !! and this leads to an infinite recursion
-	    }
-
+	  if((nosComs-p) == 11)
+	    break;
 	  else
-	    {
-	      char *num[2];
-	      tokennize(args[0],'!',num);
-	      int index = atoi(num[1]);
-	      if(comms[index] != NULL)
-		{
-		  executeCommand(comms[index]);
-		}
-	    }
+	    printf("%d. %s\n", p, comms[p]);
+    
 	}
+    }
+  else if(strcmp(args[0], "exit") == 0)
+    return 0;
       
+  else if(args[0][0] == '!')
+    {
+      if(args[0][1] == '!')
+	{
+	  executeCommand(comms[nosComs-2]);//nosComs-1 has !! and this leads to an infinite recursion
+	}
+
       else
 	{
-	  pid = fork();
-
-	  if(pid < 0)
-	    fprintf(stderr, "Could not create a child process");
-
-	  else if(pid == 0)
-	    { //Code that will be executed by the child process
-	      execvp(args[0],args);
-	      exit(1);
-	    }
-	  else 
+	  char *num[2];
+	  tokennize(args[0],'!',num);
+	  int index = atoi(num[1]);
+	  if(comms[index] != NULL)
 	    {
-	      if(!dontWait)
-		{
-		  wait(NULL);
-		}
-	      else
-		{
-		  dontWait = 0; //Reset for the next child
-		  return 1;
-		}
+	      executeCommand(comms[index]);
 	    }
-      	}
-      return 1;
- 
+	}
+    }
+      
+  else
+    {
+      pid = fork();
+
+      if(pid < 0)
+	fprintf(stderr, "Could not create a child process");
+
+      else if(pid == 0)
+	{
+	  //Code that will be executed by the child process
+	  execvp(args[0],args);
+	  exit(1);
+	}
+      else 
+	{
+	  if(!dontWait)
+	    {
+	      wait(NULL);
+	    }
+	  else
+	    {
+	      dontWait = 0; //Reset for the next child
+	      return 1;
+	    }
+	}
+    }
+  return 1;
 }
 
 int storeCommand(char *command)
@@ -151,7 +151,6 @@ void checkAmpersand(int *dontWait, char *lastArg)
 {
   //Checks the last character in the last argument for ampersand
   int lastIndex = strlen(lastArg);
-  //printf("%d %c\n",lastIndex,lastArg[--lastIndex]);
   if(lastArg[--lastIndex] == '&')
     {
       *dontWait = 1;
@@ -189,5 +188,5 @@ int tokennize(char *input,char delim, char *output[])
       output[0] = input;
       return 1;
     }
-  }
+}
 
