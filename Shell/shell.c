@@ -1,3 +1,8 @@
+/* 
+Written By - C.V.Hariharan
+Date - 07/02/2018
+*/
+
 #include<stdio.h>
 #include<sys/types.h>
 #include<unistd.h>
@@ -6,7 +11,7 @@
 
 #define T_SIZE 15
 #define ARG_SIZE 80
-#define MAX_HISTORY 100
+#define MAX_HISTORY 200
 
 int storeCommand(char *);
 int tokennize(char *, char, char **);
@@ -68,8 +73,7 @@ int executeCommand(char *command)
 	    break;
 	  else
 	    printf("%d. %s\n", p, comms[p]);
-    
-	}
+    	}
     }
   else if(strcmp(args[0], "exit") == 0)
     return 0;
@@ -78,7 +82,10 @@ int executeCommand(char *command)
     {
       if(args[0][1] == '!')
 	{
-	  executeCommand(comms[nosComs-2]);//nosComs-1 has !! and this leads to an infinite recursion
+	  if(nosComs >= 2)
+	    executeCommand(comms[nosComs-2]);//nosComs-1 has !! and this leads to an infinite recursion
+	  else
+	    printf("No commands found in the history!\n");
 	}
 
       else
@@ -89,6 +96,10 @@ int executeCommand(char *command)
 	  if(comms[index] != NULL)
 	    {
 	      executeCommand(comms[index]);
+	    }
+	  else
+	    {
+	      printf("No such command found!\n");
 	    }
 	}
     }
@@ -129,22 +140,27 @@ int storeCommand(char *command)
   fclose(fp);
 }
 
-int loadLatestCommands(char *comms[])//t single, char *com)
+int loadLatestCommands(char *comms[])
 {
-  FILE *fp = fopen("commands.txt","r");
-  ssize_t m;
-  char *line = NULL;
-  size_t n = 0;
-  int i = 0,p = 0;
-  while((m = getline(&line,&n,fp))!= -1)
+  FILE *fp;
+  if(fp = fopen("commands.txt","r"))
     {
-      comms[i] = (char *)malloc(n*sizeof(char));
-      comms[i] = line;
-      line = NULL;
-      i++;
+      ssize_t m;
+      char *line = NULL;
+      size_t n = 0;
+      int i = 0,p = 0;
+      while((m = getline(&line,&n,fp))!= -1)
+	{
+	  comms[i] = (char *)malloc(n*sizeof(char));
+	  comms[i] = line;
+	  line = NULL;
+	  i++;
+	}
+      fclose(fp);
+
+      return i;
     }
-  fclose(fp);
-  return i;
+  return 0;
 }
 
 void checkAmpersand(int *dontWait, char *lastArg)
@@ -159,6 +175,7 @@ void checkAmpersand(int *dontWait, char *lastArg)
 
 int tokennize(char *input,char delim, char *output[])
 {
+  //Tokennizes the input using the delim and stores the tokens in output
   int i = 0,m = 0,n = 0,delimFound = 0,previousDelim = 0; 
   char *temp;
   char *start = input;
@@ -167,7 +184,8 @@ int tokennize(char *input,char delim, char *output[])
       if(*(input+i) == delim)
 	{
 	  delimFound = 1;
-	  temp = (char *)malloc(i*sizeof(char));
+	  //Creates a pointer whose length is the length of the token and points it to the token in the input
+	  temp = (char *)malloc(i*sizeof(char)); 
 	  temp = start;
 	  temp[i] = '\0';
 	  output[m] = temp;
