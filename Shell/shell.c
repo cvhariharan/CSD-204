@@ -75,6 +75,9 @@ int executeCommand(char *command)
 	    printf("%d. %s\n", p, comms[p]);
     	}
     }
+  /*else if(strcmp(args[0], "cd") == 0)
+    chdir(args[1]);*/
+    
   else if(strcmp(args[0], "exit") == 0)
     return 0;
       
@@ -179,18 +182,19 @@ int tokennize(char *input,char delim, char *output[])
   int i = 0,m = 0,n = 0,delimFound = 0,previousDelim = 0; 
   char *temp;
   char *start = input;
-  for(;i < strlen(input);i++)
+  int inputLen = strlen(input);
+  for(;i < inputLen;i++)
     {
       if(*(input+i) == delim)
 	{
+	  //printf("%s\n",start);
 	  delimFound = 1;
-	  //Creates a pointer whose length is the length of the token and points it to the token in the input
-	  temp = (char *)malloc(i*sizeof(char)); 
-	  temp = start;
-	  temp[i] = '\0';
-	  output[m] = temp;
-	  start = input+1+i;
-	  previousDelim = i+1; //The index just after the previous delim index
+	  *(input+i) = '\0';
+	  output[m] = (char *)malloc((i-previousDelim)*sizeof(char));
+	  strcpy(output[m],start);
+	  previousDelim = i+1;
+	  start = input+i+1;
+	  //printf("%s\n",output[m]);
 	  m++;
 	}
     }
