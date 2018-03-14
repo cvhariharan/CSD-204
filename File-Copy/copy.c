@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <libgen.h>
+#include <string.h>
 
 #define BUFFER 100
 
@@ -26,12 +29,18 @@ int main(int argc, char *argv[])
   else
     {
       pipe(fd); /* create pipe */
-
       FILE *fp = fopen(argv[1],"rb");
-      fseek(fp,0,SEEK_END);
-      size = ftell(fp);
-      fseek(fp,0,SEEK_SET);
-      fclose(fp);
+      int src_d = open(argv[1], O_RDONLY);
+      DIR* dir;
+if((dir = opendir(argv[1])) == NULL)
+  {
+      if(src_d == -1)
+	{
+	  printf("No such file exists.\n");
+	  exit(0);
+	}
+      size = lseek(src_d, 0, SEEK_END);
+lseek(src_d, 0, SEEK_SET);
       if(size > 0)
 	{
 	 cpid = fork();
@@ -65,7 +74,7 @@ int main(int argc, char *argv[])
 	     if(strlen(loc[tokens-1]) != 0)
 	       {
 		 //Run only if the file name is not empty
-	     int dest = open(argv[2], O_RDONLY);
+	     int dest = open(path, O_RDONLY);
 	     
 	     if(dest == -1)
 	       {
@@ -80,15 +89,15 @@ int main(int argc, char *argv[])
 		     write(dest,recv_content,BUFFER);
 		     for( ; i < iterations ; i++)
 		       {
-			 lseek(fd[0],i*BUFFER + 1, SEEK_SET);
+			 lseek(fd[0],i*BUFFER, SEEK_SET);
 			 read(fd[0],recv_content,BUFFER);
-			 lseek(dest, i*BUFFER + 1, SEEK_SET);
+			 lseek(dest, i*BUFFER, SEEK_SET);
 			 write(dest,recv_content,BUFFER);
 			 
 		       }
-		     lseek(dest, i*BUFFER + 1, SEEK_SET);
+		     lseek(dest, i*BUFFER, SEEK_SET);
 		     read(fd[0],recv_content,remaining);
-		     lseek(dest, i*BUFFER + 1, SEEK_SET);
+		     lseek(dest, i*BUFFER, SEEK_SET);
 		     write(dest,recv_content,remaining);
 		   }
 		 else
@@ -99,13 +108,13 @@ int main(int argc, char *argv[])
 	       }
 	     else
 	       {
-		 printf("A file with the same name exists. Do you want to overwrite? y/n");
+		 printf("A file with the same name exists. Do you want to overwrite? y/n: ");
 		 char c;
 		 scanf("%c", &c);
 		 switch(c)
 		   {
 		   case 'Y':
-		   case 'y': dest = open(path, O_CREAT | O_WRONLY,766);
+		   case 'y': dest = open(path, O_CREAT | O_WRONLY | O_TRUNC,766);
 		     char *recv_content = malloc((size)*sizeof(char));
 		     read(fd[0],recv_content,size);
 		     write(dest,recv_content,size);
@@ -139,9 +148,13 @@ int main(int argc, char *argv[])
 	    
 	    write(fd[1], file_content, size);
 	    close(src);
-	    wait(NULL);
+            wait(NULL);
+	  
 	   }
 	}
+}
+ else
+   printf("Trying to copy a directory.\n");
      
     }
   
