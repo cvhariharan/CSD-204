@@ -10,6 +10,8 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
+#define BUFFER 100
+
 int tokennize(char *, char, char **);
 
 size_t size = 0;
@@ -67,10 +69,33 @@ int main(int argc, char *argv[])
 	     
 	     if(dest == -1)
 	       {
+		 int i = 1;
 		 dest = open(path, O_CREAT | O_WRONLY,766);
 		 char *recv_content = malloc((size)*sizeof(char));
-		 read(fd[0],recv_content,size);
-		 write(dest,recv_content,size);
+		 if(size > BUFFER)
+		   {
+		     int iterations = size/BUFFER;
+		     int remaining = size - (BUFFER * iterations);
+		     read(fd[0],recv_content,BUFFER);
+		     write(dest,recv_content,BUFFER);
+		     for( ; i < iterations ; i++)
+		       {
+			 lseek(fd[0],i*BUFFER + 1, SEEK_SET);
+			 read(fd[0],recv_content,BUFFER);
+			 lseek(dest, i*BUFFER + 1, SEEK_SET);
+			 write(dest,recv_content,BUFFER);
+			 
+		       }
+		     lseek(dest, i*BUFFER + 1, SEEK_SET);
+		     read(fd[0],recv_content,remaining);
+		     lseek(dest, i*BUFFER + 1, SEEK_SET);
+		     write(dest,recv_content,remaining);
+		   }
+		 else
+		   {
+		     read(fd[0],recv_content,size);
+		     write(dest,recv_content,size);
+		   }
 	       }
 	     else
 	       {
