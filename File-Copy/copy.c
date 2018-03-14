@@ -42,10 +42,32 @@ int main(int argc, char *argv[])
 	   {
 	     /*Close the write end*/
 	     close(fd[1]);
+	     char *loc[20];
+	     char path[100];
+	     strcpy(path,argv[2]);
+	     //Create a path to the directory
+	     int tokens = tokennize(argv[2],'/',loc); //Return a tokennized array of locations. The last element will be the file name.
+	     char dirname[100];
+	     //int start = (loc[0]==NULL)?1:0;
+	     int start = 0;
+	     strcpy(dirname,loc[start]);
+	     for(int i=start+1;i < tokens-1;i++)
+	       {
+		 strcat(dirname,"/");
+		 strcat(dirname,loc[i]);
+	       }
+	     printf("%s\n",dirname);
+	     printf("%s\n",loc[tokens-1]);
+
+	     mkdir(dirname, 0755);
+	     if(strlen(loc[tokens-1]) != 0)
+	       {
+		 //Run only if the file name is not empty
 	     int dest = open(argv[2], O_RDONLY);
+	     
 	     if(dest == -1)
 	       {
-		 dest = open(argv[2], O_CREAT | O_WRONLY,766);
+		 dest = open(path, O_CREAT | O_WRONLY,766);
 		 char *recv_content = malloc((size)*sizeof(char));
 		 read(fd[0],recv_content,size);
 		 write(dest,recv_content,size);
@@ -58,7 +80,7 @@ int main(int argc, char *argv[])
 		 switch(c)
 		   {
 		   case 'Y':
-		   case 'y': dest = open(argv[2], O_CREAT | O_WRONLY,766);
+		   case 'y': dest = open(path, O_CREAT | O_WRONLY,766);
 		     char *recv_content = malloc((size)*sizeof(char));
 		     read(fd[0],recv_content,size);
 		     write(dest,recv_content,size);
@@ -68,7 +90,9 @@ int main(int argc, char *argv[])
 		   }
 	       }
 	     close(dest);
-	     
+	       }
+	     else
+	       printf("File name cannot be empty.\n");
 	     //fprintf(dest,"%s",recv_content);
 
 	    }
@@ -99,3 +123,38 @@ int main(int argc, char *argv[])
   return 0;
 }
 
+int tokennize(char *input,char delim, char *output[])
+{
+  //Tokennizes the input using the delim and stores the tokens in output
+  int i = 0,m = 0,n = 0,delimFound = 0,previousDelim = 0; 
+  char *temp;
+  char *start = input;
+  int inputLen = strlen(input);
+  for(;i < inputLen;i++)
+    {
+      if(*(input+i) == delim)
+	{
+	  //printf("%s\n",start);
+	  delimFound = 1;
+	  *(input+i) = '\0';
+	  output[m] = (char *)malloc((i-previousDelim)*sizeof(char));
+	  strcpy(output[m],start);
+	  previousDelim = i+1;
+	  start = input+i+1;
+	  //printf("%s\n",output[m]);
+	  m++;
+	}
+    }
+  if(delimFound)
+    {
+      temp = (char *)malloc((i-previousDelim)*sizeof(char));
+      temp = input+previousDelim;
+      output[m] = temp;
+      return ++m;
+    }
+  else
+    {
+      output[0] = input;
+      return 1;
+    }
+}
