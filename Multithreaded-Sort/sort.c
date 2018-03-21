@@ -26,7 +26,9 @@ int main()
 int sort_and_merge()
 {
   int arr_size = sizeof(arr)/sizeof(int);
-  void *sort_arr1, *sort_arr2;
+  int sorted[arr_size];
+  int i=0,j=0,k=0;
+  void **sort_arr1, **sort_arr2;
   
   pthread_t sort_thread1, sort_thread2;
   pthread_attr_t attr1, attr2;
@@ -46,21 +48,34 @@ int sort_and_merge()
   pthread_create(&sort_thread2, &attr2, sort, data2);
 
   pthread_join(sort_thread1, NULL);
-  for(int i = data1->start; i<= data1->end; i++)
-    {
-      printf("%d\n", arr[i]);
-    }
   pthread_join(sort_thread2, NULL);
-  for(int i = data2->start+1 ; i<= data2->end; i++)
+
+  i = data1->start;
+  j = data2->start;
+  while(i < data1->end && j < data2->end)
     {
-      printf("%d\n", arr[i]);
+      if(arr[i] <= arr[j])
+	{
+	  sorted[k] = arr[i];
+	  i++;
+	}
+      else
+	{
+	  sorted[k] = arr[j];
+	  j++;
+	}
+      k++;
     }
-  
+
+  printf("Sorted Array...\n");
+  for(i=0; i < arr_size; i++)
+    printf("%d\n",sorted[i]);
 }
 
 void *sort(void *param)
 {
   parameters *data = (parameters *) param;
+  int *temp_arr;
   int swap, i;
   do
     {
@@ -80,7 +95,11 @@ void *sort(void *param)
 
     }while(swap != 0);
 
+  temp_arr = (int *)malloc((data->end - data->start)*sizeof(int));
+  
   printf("Thread ID: %d\n", pthread_self());
+  for(i = data->start; i < data->end; i++)
+    printf("%d\n",arr[i]);
   
 }
 
