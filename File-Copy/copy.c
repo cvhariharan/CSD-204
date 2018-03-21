@@ -142,11 +142,31 @@ lseek(src_d, 0, SEEK_SET);
 	      }
 	    char *file_content;
 	    file_content = (char *)malloc((size)*sizeof(char));
-	    read(src,file_content, size);
-	    // printf("%s\n", file_content);
-	 
-	    
-	    write(fd[1], file_content, size);
+	   if(size > BUFFER)
+		   {
+		     int i = 1;
+		     int iterations = size/BUFFER;
+		     int remaining = size - (BUFFER * iterations);
+		     read(src,file_content,BUFFER);
+		     write(fd[1],file_content,BUFFER);
+		     for( ; i < iterations ; i++)
+		       {
+			 lseek(src,i*BUFFER, SEEK_SET);
+			 read(src,file_content,BUFFER);
+			 lseek(fd[1], i*BUFFER, SEEK_SET);
+			 write(fd[1],file_content,BUFFER);
+			 
+		       }
+		      lseek(src,i*BUFFER, SEEK_SET);
+		      read(src,file_content,BUFFER);
+		      lseek(fd[1], i*BUFFER, SEEK_SET);
+		      write(fd[1],file_content,BUFFER);
+		   }
+		 else
+		   {
+		     read(src,file_content,size);
+		     write(fd[1],file_content,size);
+		   }
 	    close(src);
             wait(NULL);
 	  
