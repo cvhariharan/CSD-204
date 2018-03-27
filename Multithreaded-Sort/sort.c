@@ -50,6 +50,7 @@ int sort_and_merge()
   pthread_join(sort_thread1, NULL);
   pthread_join(sort_thread2, NULL);
 
+  //Merge
   i = data1->start;
   j = data2->start;
   while(i < data1->end && j < data2->end)
@@ -66,7 +67,22 @@ int sort_and_merge()
 	}
       k++;
     }
+  while(i < data1->end)
+    {
+      sorted[k] = arr[i];
+      i++;
+      k++;
+    }
+  while(j <= data2->end)
+    {
+      sorted[k] = arr[j];
+      j++;
+      k++;
+    }
 
+  printf("Array\n");
+  for(i=0; i < arr_size; i++)
+    printf("%d\n", arr[i]);
   printf("Sorted Array...\n");
   for(i=0; i < arr_size; i++)
     printf("%d\n",sorted[i]);
@@ -81,7 +97,7 @@ void *sort(void *param)
     {
       swap = 0;
       i = data->start;
-      while(i <= data->end - 1)
+      while(i < data->end)
 	{
 	  if(arr[i] > arr[i+1])
 	    {
