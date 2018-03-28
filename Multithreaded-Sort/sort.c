@@ -88,7 +88,7 @@ int sort_and_merge()
     printf("%d\n",sorted[i]);
 }
 
-void *sort(void *param)
+/*void *sort(void *param)
 {
   parameters *data = (parameters *) param;
   int *temp_arr;
@@ -117,5 +117,49 @@ void *sort(void *param)
   for(i = data->start; i < data->end; i++)
     printf("%d\n",arr[i]);
   
+}
+*/
+void *sort(void *param)
+{
+  parameters *data = (parameters *) param;
+  int p = data->start;
+  int r = data->end;
+  int q = 0;
+  parameters *temp_data = (parameters *)malloc(sizeof(parameters));
+  if(p < r)
+  {
+    q = partition(p, r);
+    temp_data->start = p;
+    temp_data->end = q;
+    sort(temp_data);
+    temp_data->start = q+1;
+    temp_data->end = r;
+    sort(temp_data);
+  }
+}
+
+int partition(int p, int r)
+{
+  int i, j, pivot, temp;
+  pivot = arr[p];
+  i = p;
+  j = r;
+  while(1)
+  {
+   while(arr[i] < pivot && arr[i] != pivot)
+   i++;
+   while(arr[j] > pivot && arr[j] != pivot)
+   j--;
+   if(i < j)
+   {
+    temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+   }
+   else
+   {
+    return j;
+   }
+  }
 }
 
