@@ -3,6 +3,9 @@
 #include<sys/types.h>
 #include<unistd.h>
 #include<fcntl.h>
+#include<stdlib.h>
+#include<string.h>
+
 
 int sort_and_merge();
 void *sort(void *);
@@ -13,11 +16,36 @@ typedef struct
   int start;
   int end;
 }parameters;
+struct stat st;
 
-int arr[] = {1,23,53,16,75,43,89,21,77,88,90,91,26,77,15,211,48};
-int arr_size = 0;
-int main()
+//int arr[] = {1,23,53,16,75,43,89,21,77,88,90,91,26,77,15,211,48};
+long *arr;
+int arr_size = 600;
+int main(int argc, char *argv[])
 {
+  //CSV Parser
+  int i=0;
+  FILE *fp;
+  char *data,*token;
+  fp = fopen(argv[1],"r+");
+  stat(argv[1], &st);
+  arr_size = st.st_size;
+  //printf("%d A\n", arr_size);
+  data = (char *)malloc(arr_size*sizeof(char));
+  fscanf(fp, "%s", data);
+  printf("Data: %s\n", data);
+  
+  arr = (long *)malloc(strlen(data)*sizeof(long));
+  //token = (char *)malloc(8*sizeof(char));
+  token = strtok(data, ",");
+  while(token != NULL)
+    {
+      arr[i] = atoi(token);
+      token = strtok(NULL, ",");
+      // arr[i] = atoi(token);
+      i++;
+    }
+  arr_size = i;
   sort_and_merge();
   return 0;
 }
@@ -25,7 +53,7 @@ int main()
 
 int sort_and_merge()
 {
-  int arr_size = sizeof(arr)/sizeof(int);
+  // int arr_size = sizeof(arr)/sizeof(int);
   int sorted[arr_size];
   int i=0,j=0,k=0;
   void **sort_arr1, **sort_arr2;
@@ -39,9 +67,10 @@ int sort_and_merge()
   parameters *data1 = (parameters *)malloc(sizeof(parameters));
   parameters *data2 = (parameters *)malloc(sizeof(parameters));
 
+  //printf("M: %d\n", arr_size/2);
   data1->start = 0;
-  data1->end = 8;
-  data2->start = 8;
+  data1->end = arr_size/2;
+  data2->start = arr_size/2;
   data2->end = arr_size-1;
 
   pthread_create(&sort_thread1, &attr1, sort, data1);
@@ -88,7 +117,7 @@ int sort_and_merge()
     printf("%d\n",sorted[i]);
 }
 
-/*void *sort(void *param)
+void *sort(void *param)
 {
   parameters *data = (parameters *) param;
   int *temp_arr;
@@ -118,8 +147,8 @@ int sort_and_merge()
     printf("%d\n",arr[i]);
   
 }
-*/
-void *sort(void *param)
+
+ /*void *sort(void *param)
 {
   parameters *data = (parameters *) param;
   int p = data->start;
@@ -161,5 +190,5 @@ int partition(int p, int r)
     return j;
    }
   }
-}
+  }*/
 
