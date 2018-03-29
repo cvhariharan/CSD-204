@@ -6,7 +6,7 @@
 #include<stdlib.h>
 #include<string.h>
 
-
+int lock = 0;
 int sort_and_merge();
 void *sort(void *);
 
@@ -23,6 +23,8 @@ long *arr;
 int arr_size = 600;
 int main(int argc, char *argv[])
 {
+  pthread_t merge;
+  pthread_attr_t merge_attr;
   //CSV Parser
   int i=0;
   FILE *fp;
@@ -33,7 +35,7 @@ int main(int argc, char *argv[])
   //printf("%d A\n", arr_size);
   data = (char *)malloc(arr_size*sizeof(char));
   fscanf(fp, "%s", data);
-  printf("Data: %s\n", data);
+  //printf("Data: %s\n", data);
   
   arr = (long *)malloc(strlen(data)*sizeof(long));
   //token = (char *)malloc(8*sizeof(char));
@@ -46,7 +48,14 @@ int main(int argc, char *argv[])
       i++;
     }
   arr_size = i;
-  sort_and_merge();
+  printf("Number of elements in the input file: %d\n",i);
+  /*for(i=0; i < arr_size; i++)
+    printf("%d\n", arr[i]);*/
+  
+  pthread_attr_init(&merge_attr);
+  pthread_create(&merge, &merge_attr, sort_and_merge, NULL);
+  pthread_join(merge, NULL);
+  
   return 0;
 }
 
@@ -79,6 +88,13 @@ int sort_and_merge()
   pthread_join(sort_thread1, NULL);
   pthread_join(sort_thread2, NULL);
 
+  
+  for(i=data1->start;i<data1->end;i++)
+    printf("1. %d\n",arr[i]);
+  printf("...................\n");
+  for(i=data2->start;i<data2->end+1;i++)
+    printf("2. %d\n",arr[i]);
+  
   //Merge
   i = data1->start;
   j = data2->start;
@@ -109,15 +125,13 @@ int sort_and_merge()
       k++;
     }
 
-  printf("Array\n");
-  for(i=0; i < arr_size; i++)
-    printf("%d\n", arr[i]);
+  
   printf("Sorted Array...\n");
   for(i=0; i < arr_size; i++)
     printf("%d\n",sorted[i]);
 }
-
-void *sort(void *param)
+//Bubble Sort
+/*void *sort(void *param)
 {
   parameters *data = (parameters *) param;
   int *temp_arr;
@@ -141,16 +155,43 @@ void *sort(void *param)
     }while(swap != 0);
 
   temp_arr = (int *)malloc((data->end - data->start)*sizeof(int));
-  
-  printf("Thread ID: %d\n", pthread_self());
-  for(i = data->start; i < data->end; i++)
-    printf("%d\n",arr[i]);
-  
-}
 
- /*void *sort(void *param)
+  /* while(lock); //For synchronizing the thread print statements
+      lock = 1;
+      printf("Thread ID: %d\n", pthread_self());
+      for(i = data->start; i < data->end; i++)
+	printf("%d\n",arr[i]);
+      lock = 0;
+  */
+//}
+//Insertion Sort
+void *sort(void *param)
 {
   parameters *data = (parameters *) param;
+  int *temp_arr;
+  int i=0,n,m=0,t,j;
+  n = data->end;
+  for(i=0;i<n;i++)
+    {
+        m=i;
+        for(j=i;j>=0 && m>=0;j--)
+        {
+            if(arr[j]>arr[m+1])
+            {
+                t=arr[j];
+                arr[j]=arr[m+1];
+                arr[m+1]=t;
+                m--;
+            }
+        }
+    }
+}
+//Quick Sort implementation
+/*void *sort(void *param)
+{
+  parameters *data = (parameters *) param;
+  pthread_attr_t at1,at2;
+  pthread_t p1,p2;
   int p = data->start;
   int r = data->end;
   int q = 0;
@@ -160,10 +201,16 @@ void *sort(void *param)
     q = partition(p, r);
     temp_data->start = p;
     temp_data->end = q;
-    sort(temp_data);
+    pthread_attr_init(&at1);
+    pthread_create(&p1, &at1, sort, temp_data);
+    //sort(temp_data);
     temp_data->start = q+1;
     temp_data->end = r;
-    sort(temp_data);
+    pthread_attr_init(&at2);
+    pthread_create(&p2, &at2, sort, temp_data);
+    pthread_join(p1, NULL);
+    pthread_join(p2, NULL);
+    //sort(temp_data);
   }
 }
 
@@ -190,5 +237,5 @@ int partition(int p, int r)
     return j;
    }
   }
-  }*/
-
+  }
+*/
