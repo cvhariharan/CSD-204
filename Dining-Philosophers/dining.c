@@ -14,7 +14,8 @@ pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t *lock;
 pthread_cond_t *cond;
 int n; //Number of philosophers
-
+int *eaten;
+int flag = 1;
 void main()
 {
   
@@ -24,10 +25,12 @@ void main()
   forks = (int *)malloc(n*sizeof(int));
   cond = (pthread_cond_t *)malloc(n*sizeof(pthread_cond_t));
   lock = (pthread_mutex_t *)malloc(n*sizeof(pthread_mutex_t));
+  eaten = (int *)malloc(n*sizeof(int));
   for(i=0;i<n;i++)
     {
        pthread_create(&philosophers[i],NULL,philosopher,&i);
        forks[i] = 0;
+       eaten[i] = 0;
        pthread_mutex_init(&lock[i], NULL);
        pthread_cond_init(&cond[i], NULL);
        
@@ -50,6 +53,7 @@ void pickup_forks(int philosopher_id)
     pthread_cond_wait(&cond[small_fork],&lock[small_fork]);
   forks[small_fork] = 1;
   printf("Philosopher %d got fork %d\n",philosopher_id,small_fork);
+  
   pthread_mutex_lock(&lock[large_fork]);
   
   while(forks[large_fork] != 0)
@@ -57,8 +61,8 @@ void pickup_forks(int philosopher_id)
   forks[large_fork] = 1;
   printf("Philosopher %d got fork %d\n",philosopher_id,large_fork);
   pthread_mutex_unlock(&lock[large_fork]);
-    
-  pthread_mutex_unlock(&lock[small_fork]);
+  pthread_mutex_unlock(&lock[small_fork]);  
+  
 
   
 }
@@ -72,16 +76,17 @@ void return_forks(int philosopher_id)
   pthread_mutex_lock(&lock[small_fork]);
   
   forks[small_fork] = 0;
-    pthread_cond_signal(&cond[small_fork]);
+  pthread_cond_signal(&cond[small_fork]);
   printf("Philosopher %d released fork %d\n",philosopher_id,small_fork);
+  
   pthread_mutex_lock(&lock[large_fork]);
   
   forks[large_fork] = 0;
-    pthread_cond_signal(&cond[large_fork]);
+  pthread_cond_signal(&cond[large_fork]);
   printf("Philosopher %d released fork %d\n",philosopher_id,large_fork);
   pthread_mutex_unlock(&lock[large_fork]);
-    
-  pthread_mutex_unlock(&lock[small_fork]);
+  pthread_mutex_unlock(&lock[small_fork]);  
+  
 }
 
 void *philosopher(void *p)
@@ -90,13 +95,24 @@ void *philosopher(void *p)
   int p_id = *id;
   //printf("Philosopher %d\n",*id);
    srand(time(NULL));
-  while(1)
-    {
+   while(1)
+     {
       int r = (1 + rand()) % 4;
       printf("Philosopher %d is thinking\n",p_id);
       sleep(r);
       pickup_forks(p_id);
+      //pthread_mutex_lock(&mlock);
       printf("Philosopher %d is eating\n",p_id);
+      eaten[p_id]+=1;
+      for(int i=0;i<n;i++)
+	{
+	  if(eaten[i] == 0)
+	    flag = 0;
+	}
+      if(flag)
+	break;
+      flag = 1;
+      //pthread_mutex_unlock(&mlock);
       return_forks(p_id);
-    }
+     }
 }
