@@ -104,13 +104,14 @@ void *philosopher(void *p)
       //pthread_mutex_lock(&mlock);
       printf("Philosopher %d is eating\n",p_id);
       eaten[p_id]+=1;
+      
       for(int i=0;i<n;i++)
 	{
 	  if(eaten[i] == 0)
 	    flag = 0;
 	}
       if(flag)
-	break;
+	exit(0);
       flag = 1;
       //pthread_mutex_unlock(&mlock);
       return_forks(p_id);
