@@ -7,14 +7,23 @@
 #include<string.h>
 #include<time.h>
 
-void *philosopher(void *);
+#define THINKING 0
+#define EATING 1
+#define HUNGRY 2
 
+void check(int);
+void *philosopher(void *);
+int global_pid = 0;
 int *forks; //1 if used for each fork
-pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t rlock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t tlock = PTHREAD_MUTEX_INITIALIZER; 
 pthread_mutex_t *lock;
+pthread_mutex_t flock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t *cond;
-int n; //Number of philosophers
+int n = 0; //Number of philosophers
 int *eaten;
+int *states;
 int flag = 1;
 void main()
 {
@@ -22,17 +31,21 @@ void main()
     {
       int i,j;
       char c;
-      scanf("%d",&n);
+      if(n == 0)
+	scanf("%d",&n);
       pthread_t philosophers[n];
       forks = (int *)malloc(n*sizeof(int));
+      states = (int *)malloc(n*sizeof(int));
       cond = (pthread_cond_t *)malloc(n*sizeof(pthread_cond_t));
       lock = (pthread_mutex_t *)malloc(n*sizeof(pthread_mutex_t));
       eaten = (int *)malloc(n*sizeof(int));
       for(i=0;i<n;i++)
 	{
-	  pthread_create(&philosophers[i],NULL,philosopher,&i);
+	  states[i] =  THINKING;
+	  pthread_create(&philosophers[i],NULL,philosopher,NULL);
 	  forks[i] = 0;
 	  eaten[i] = 0;
+	 
 	  pthread_mutex_init(&lock[i], NULL);
 	  pthread_cond_init(&cond[i], NULL);
        
@@ -41,75 +54,49 @@ void main()
 	{
 	  pthread_join(philosophers[i], NULL);
 	}
-      pthread_mutex_lock(&mlock);
       for(i=0;i<n;i++)
 	{
 	  printf("Philosopher %d Time: %d\n",i,eaten[i]);
 	}
-      printf("Do you want to continue?Y/n\n");
-      scanf("%c",&c);
+      printf("Do you want to continue?Y/n: ");
+      scanf(" %c", &c);
       if(c == 'Y' || c == 'y')
-	continue;
-      else if(c == 'N' || c == 'n')
-	exit(0);
+	{
+	  global_pid = 0;
+	  continue;
+	}
       else
-	printf("Incorrect choice!\n");
-      pthread_mutex_unlock(&mlock);
+	exit(0);
     }
 }
 
 void pickup_forks(int philosopher_id)
 {
-  int fork1 = philosopher_id;
-  int fork2 = (philosopher_id + n-1)%n;
-  int small_fork = (fork1 < fork2)?fork1:fork2;
-  int large_fork = (fork1 > fork2)?fork1:fork2;
   pthread_mutex_lock(&mlock);
-  
-  while(forks[small_fork] != 0)
-    pthread_cond_wait(&cond[small_fork],&mlock);
-  forks[small_fork] = 1;
-  printf("Philosopher %d got fork %d\n",philosopher_id,small_fork);
-  
-  //pthread_mutex_lock(&lock[large_fork]);
-  
-  while(forks[large_fork] != 0)
-    pthread_cond_wait(&cond[large_fork],&mlock);
-  forks[large_fork] = 1;
-  printf("Philosopher %d got fork %d\n",philosopher_id,large_fork);
+  states[philosopher_id] = HUNGRY;
+  check(philosopher_id);
+  while(states[philosopher_id] != EATING)
+    pthread_cond_wait(&cond[philosopher_id],&mlock);
   pthread_mutex_unlock(&mlock);
-  // pthread_mutex_unlock(&lock[small_fork]);  
-  
-
   
 }
 
-void return_forks(int philosopher_id)
+void return_forks(int p_id)
 {
-  int fork1 = philosopher_id;
-  int fork2 = (philosopher_id + n-1)%n;
-  int small_fork = (fork1 < fork2)?fork1:fork2;
-  int large_fork = (fork1 > fork2)?fork1:fork2;
-  pthread_mutex_lock(&mlock);
-  
-  forks[small_fork] = 0;
-  pthread_cond_signal(&cond[small_fork]);
-  printf("Philosopher %d released fork %d\n",philosopher_id,small_fork);
-  
-  //pthread_mutex_lock(&lock[large_fork]);
-  
-  forks[large_fork] = 0;
-  pthread_cond_signal(&cond[large_fork]);
-  printf("Philosopher %d released fork %d\n",philosopher_id,large_fork);
-  pthread_mutex_unlock(&mlock);
+  pthread_mutex_lock(&rlock);
+  states[p_id] = THINKING;
+  check((p_id+1)%n);
+  check((p_id+n-1)%n);
+  pthread_mutex_unlock(&rlock);
   //pthread_mutex_unlock(&lock[small_fork]);  
   
 }
 
 void *philosopher(void *p)
 {
-  int *id = (int *)p;
-  int p_id = *id;
+  pthread_mutex_lock(&tlock);
+  int p_id = global_pid++;
+  pthread_mutex_unlock(&tlock);
   char c;
   //printf("Philosopher %d\n",*id);
    srand(time(NULL));
@@ -122,11 +109,9 @@ void *philosopher(void *p)
       //pthread_mutex_lock(&mlock);
       printf("Philosopher %d is eating\n",p_id);
       eaten[p_id]+=r;
-      
       for(int i=0;i<n;i++)
 	{
-	  if(eaten[i] == 0)
-	    flag = 0;
+	  flag *= eaten[i];
 	}
       
       //pthread_mutex_unlock(&mlock);
@@ -134,7 +119,18 @@ void *philosopher(void *p)
       if(flag)
 	{
 	  return 0;
-	}
+       	}
       flag = 1;
      }
+}
+
+void check(int p_id)
+{
+  pthread_mutex_lock(&flock);
+  if(states[(p_id+1)%n] != EATING && states[(p_id+n-1)%n] != EATING && states[p_id] == HUNGRY)
+    {
+      states[p_id] = EATING;
+      pthread_cond_signal(&cond[p_id]);
+    }
+  pthread_mutex_unlock(&flock);
 }
