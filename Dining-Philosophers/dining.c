@@ -25,26 +25,32 @@ int n = 0; //Number of philosophers
 int *eaten;
 int *states;
 int flag = 1;
+int total_time = 0;
 void main()
 {
+  int i,j;
+   scanf("%d",&n);
+   eaten = (int *)malloc(n*sizeof(int));
+   for(i=0;i<n;i++)
+     {
+       eaten[i] = 0;
+     }
   while(1)
     {
-      int i,j;
+      
       char c;
-      if(n == 0)
-	scanf("%d",&n);
+      
       pthread_t philosophers[n];
       forks = (int *)malloc(n*sizeof(int));
       states = (int *)malloc(n*sizeof(int));
       cond = (pthread_cond_t *)malloc(n*sizeof(pthread_cond_t));
       lock = (pthread_mutex_t *)malloc(n*sizeof(pthread_mutex_t));
-      eaten = (int *)malloc(n*sizeof(int));
+      
       for(i=0;i<n;i++)
 	{
 	  states[i] =  THINKING;
 	  pthread_create(&philosophers[i],NULL,philosopher,NULL);
 	  forks[i] = 0;
-	  eaten[i] = 0;
 	 
 	  pthread_mutex_init(&lock[i], NULL);
 	  pthread_cond_init(&cond[i], NULL);
@@ -57,6 +63,7 @@ void main()
       for(i=0;i<n;i++)
 	{
 	  printf("Philosopher %d Time: %d\n",i,eaten[i]);
+	  total_time += eaten[i];
 	}
       printf("Do you want to continue?Y/n: ");
       scanf(" %c", &c);
@@ -66,7 +73,11 @@ void main()
 	  continue;
 	}
       else
-	exit(0);
+	{
+	  printf("Philosophers = %d\n", n);
+	  printf("Total Time = %d\n",total_time);
+	  exit(0);
+	}
     }
 }
 
@@ -74,9 +85,11 @@ void pickup_forks(int philosopher_id)
 {
   pthread_mutex_lock(&mlock);
   states[philosopher_id] = HUNGRY;
+  printf("Philosopher %d is HUNGRY.\n",philosopher_id);
   check(philosopher_id);
   while(states[philosopher_id] != EATING)
     pthread_cond_wait(&cond[philosopher_id],&mlock);
+  printf("Philosopher %d picked up %d and %d chopsticks.\n",philosopher_id,philosopher_id,(philosopher_id+n-1)%n);
   pthread_mutex_unlock(&mlock);
   
 }
