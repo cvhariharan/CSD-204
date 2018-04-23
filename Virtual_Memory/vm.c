@@ -5,7 +5,6 @@
 #include<stdlib.h>
 #include<string.h>
 
-#define MAX_PAGE 20
 
 void retrieve(int *, int *, int);
 int hit(int *, int);
@@ -25,9 +24,9 @@ void main()
   frames = (int *)malloc(fn*sizeof(int));
   MAX_PAGES = sizeof(pages)/sizeof(int);
   for(i=0;i<fn;i++)
-    frames[i] = MAX_PAGE+1;
+    frames[i] = MAX_PAGES+1;
   
-  for(i=0;i<MAX_PAGE;i++)
+  for(i=0;i<MAX_PAGES;i++)
     {
       retrieve(frames,pages,i);
     }
@@ -82,7 +81,7 @@ int hit(int frames[], int p)
 int optimal(int frames[], int pages[],int index)
 {
   //int fn = sizeof(frames)/sizeof(int),i,j;
-  int pn = MAX_PAGE,i,j,flag;
+  int pn = MAX_PAGES,i,j;
   int greatest=0,victim=0;
   for(i=0;i<fn;i++)
     {
