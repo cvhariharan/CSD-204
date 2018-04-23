@@ -43,7 +43,7 @@ void retrieve(int frames[], int pages[],int index)
   if(hit(frames,pages[index]))
     {
       hit_counter++;
-      printf("Hit\n");
+      printf("Hit %d\n",pages[index]);
     }
   else
     {
@@ -101,6 +101,7 @@ int optimal(int frames[], int pages[],int index)
       if(j == pn)
 	{
 	  victim = i;
+	  break;
 	}
     }
   return victim;
