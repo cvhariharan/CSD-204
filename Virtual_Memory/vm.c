@@ -4,6 +4,7 @@
 #include<fcntl.h>
 #include<stdlib.h>
 #include<string.h>
+#include<limits.h>
 
 typedef struct
 {
@@ -14,9 +15,9 @@ typedef struct
 void retrieve(Frame *, int *, int);
 int hit(Frame *, int);
 int optimal(Frame *, int *, int);
+int LRU(Frame *, int *, int);
 
-
-
+int clock = 0; //For LRU. Incremented with each memory access and added to the corresponding frame.
 int fn = 3;
 int MAX_PAGES = 20;
 int hit_counter = 0;
@@ -31,7 +32,10 @@ void main()
   frames = (Frame *)malloc(fn*sizeof(Frame *));
   MAX_PAGES = sizeof(pages)/sizeof(int);
   for(i=0;i<fn;i++)
-    frames[i].number = MAX_PAGES+1;
+    {
+      frames[i].number = MAX_PAGES+1;
+      
+    }
   
   for(i=0;i<MAX_PAGES;i++)
     {
@@ -59,15 +63,20 @@ void retrieve(Frame frames[], int pages[],int index)
 	{
 	  frames[next_frame].number = pages[index];
 	  printf("Victimq: %d\n",next_frame);
+	  frames[next_frame].priority = clock;
 	  next_frame++;
+	  
 	}
       else
 	{
-	  int victim = optimal(frames,pages,index);
+	  int victim = LRU(frames,pages,index);
 	  printf("Victim: %d\n",victim);
 	  frames[victim].number = pages[index];
+	  frames[victim].priority = clock;
 	}
-     
+      
+      
+      clock++;
     }
     
 }
@@ -114,3 +123,18 @@ int optimal(Frame frames[], int pages[],int index)
   return victim;
 }
 
+int LRU(Frame frames[], int pages[], int index)
+{
+  int pn = MAX_PAGES,i,j,victim = 0;
+  int smallest = INT_MAX;
+  //printf("MAX INT %d\n",smallest);
+  for(i=0;i<fn;i++)
+    {
+      if(frames[i].priority < smallest)
+	{
+	  smallest = frames[i].priority;
+	  victim = i;
+	}
+    }
+  return i;
+}
