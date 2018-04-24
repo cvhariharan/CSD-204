@@ -16,6 +16,7 @@ void retrieve(Frame *, int *, int);
 int hit(Frame *, int);
 int optimal(Frame *, int *, int);
 int LRU(Frame *, int *, int);
+int FIFO();
 
 int clock = 0; //For LRU. Incremented with each memory access and added to the corresponding frame.
 int fn = 3;
@@ -23,6 +24,7 @@ int MAX_PAGES = 20;
 int hit_counter = 0;
 int miss_counter = 0;
 int next_frame = 0;
+int head_pointer = 0; //For FIFO
 
 void main()
 {
@@ -34,7 +36,6 @@ void main()
   for(i=0;i<fn;i++)
     {
       frames[i].number = MAX_PAGES+1;
-      
     }
   
   for(i=0;i<MAX_PAGES;i++)
@@ -46,6 +47,7 @@ void main()
       printf("%d\n",frames[i].number);
       
     }
+  printf("FIFO\n");
   printf("Hits: %d, Misses: %d\n",hit_counter,miss_counter);
 }
 
@@ -69,7 +71,7 @@ void retrieve(Frame frames[], int pages[],int index)
 	}
       else
 	{
-	  int victim = LRU(frames,pages,index);
+	  int victim = FIFO();//LRU(frames,pages,index);
 	  printf("Victim: %d\n",victim);
 	  frames[victim].number = pages[index];
 	  frames[victim].priority = clock;
@@ -136,5 +138,14 @@ int LRU(Frame frames[], int pages[], int index)
 	  victim = i;
 	}
     }
+  return i;
+}
+
+int FIFO()
+{
+  int i = head_pointer;
+  head_pointer++;
+  if(head_pointer >= fn)
+    head_pointer = 0;
   return i;
 }
