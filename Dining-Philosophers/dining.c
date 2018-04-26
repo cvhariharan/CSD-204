@@ -101,7 +101,6 @@ void return_forks(int p_id)
   check((p_id+1)%n);
   check((p_id+n-1)%n);
   pthread_mutex_unlock(&rlock);
-  //pthread_mutex_unlock(&lock[small_fork]);  
   
 }
 
