@@ -66,6 +66,7 @@ void main()
 	{
 	  printf("Philosophers: %d\n",n);
 	  printf("Total Time: %d\n",total_time);
+	  printf("Average Time: %f\n",(float)total_time/(float)n);
 	  exit(0);
 	}
       else
@@ -87,15 +88,14 @@ void pickup_forks(int philosopher_id)
   forks[small_fork] = 1;
   printf("Philosopher %d got fork %d\n",philosopher_id,small_fork);
   
-  //pthread_mutex_lock(&lock[large_fork]);
+  
   
   while(forks[large_fork] != 0)
     pthread_cond_wait(&cond[large_fork],&mlock);
   forks[large_fork] = 1;
   printf("Philosopher %d got fork %d\n",philosopher_id,large_fork);
   pthread_mutex_unlock(&mlock);
-  // pthread_mutex_unlock(&lock[small_fork]);  
-  
+ 
 
   
 }
